@@ -13,20 +13,22 @@ const client = new MongoClient(
 let videosCollection;
 
 async function connectDB() {
-  await client.connect();
-  const db = client.db("videosDB");
-  videosCollection = db.collection("videos");
-  console.log("MongoDB Connected");
+  if (!videosCollection) {
+    await client.connect();
+    const db = client.db("videosDB");
+    videosCollection = db.collection("videos");
+  }
 }
-connectDB();
+
+/* ROUTES */
 
 app.get("/", (req, res) => {
-  res.send("Hello Mr. Amir! Welcome to the Movies API");
+  res.send("Amir brother's movies server");
 });
 
-/* ================= CREATE ================= */
-
 app.post("/videos", async (req, res) => {
+  await connectDB();
+
   const data = {
     title: req.body.title,
     youtubeUrl: req.body.youtubeUrl,
@@ -37,22 +39,16 @@ app.post("/videos", async (req, res) => {
   res.json(result);
 });
 
-/* ================= GET + PAGINATION + SEARCH ================= */
-
 app.get("/videos", async (req, res) => {
+  await connectDB();
+
   const page = parseInt(req.query.page) || 1;
   const limit = 6;
-  const search = req.query.search || "";
 
-  const query = {
-    title: { $regex: search, $options: "i" },
-  };
-
-  const total = await videosCollection.countDocuments(query);
+  const total = await videosCollection.countDocuments();
 
   const videos = await videosCollection
-    .find(query)
-    .sort({ createdAt: -1 })
+    .find()
     .skip((page - 1) * limit)
     .limit(limit)
     .toArray();
@@ -63,9 +59,9 @@ app.get("/videos", async (req, res) => {
   });
 });
 
-/* ================= DELETE ================= */
-
 app.delete("/videos/:id", async (req, res) => {
+  await connectDB();
+
   await videosCollection.deleteOne({
     _id: new ObjectId(req.params.id),
   });
@@ -73,4 +69,5 @@ app.delete("/videos/:id", async (req, res) => {
   res.json({ message: "Deleted" });
 });
 
-app.listen(3001, () => console.log("Server running on 3001"));
+/* IMPORTANT */
+export default app;

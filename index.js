@@ -7,7 +7,7 @@ app.use(cors());
 app.use(express.json());
 
 const client = new MongoClient(
-  "mongodb+srv://rh565153_db_user:500KUFenv59ztiV8@cluster0.qk34yqj.mongodb.net",
+  "mongodb+srv://rh565153_db_user:500KUFenv59ztiV8@cluster0.qk34yqj.mongodb.net/videosDB?retryWrites=true&w=majority",
 );
 
 let videosCollection;

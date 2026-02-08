@@ -20,6 +20,10 @@ async function connectDB() {
 }
 connectDB();
 
+app.get("/", (req, res) => {
+  res.send("Hello Mr. Amir! Welcome to the Movies API");
+});
+
 /* ================= CREATE ================= */
 
 app.post("/videos", async (req, res) => {

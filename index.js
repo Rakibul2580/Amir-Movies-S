@@ -13,22 +13,20 @@ const client = new MongoClient(
 let videosCollection;
 
 async function connectDB() {
-  if (!videosCollection) {
-    await client.connect();
-    const db = client.db("videosDB");
-    videosCollection = db.collection("videos");
-  }
+  await client.connect();
+  const db = client.db("videosDB");
+  videosCollection = db.collection("videos");
+  console.log("MongoDB Connected");
 }
-
-/* ROUTES */
+connectDB();
 
 app.get("/", (req, res) => {
-  res.send("Amir brother's movies server");
+  res.send("Hello Mr. Amir! Welcome to the Movies API");
 });
 
-app.post("/videos", async (req, res) => {
-  await connectDB();
+/* ================= CREATE ================= */
 
+app.post("/videos", async (req, res) => {
   const data = {
     title: req.body.title,
     youtubeUrl: req.body.youtubeUrl,
@@ -39,16 +37,22 @@ app.post("/videos", async (req, res) => {
   res.json(result);
 });
 
-app.get("/videos", async (req, res) => {
-  await connectDB();
+/* ================= GET + PAGINATION + SEARCH ================= */
 
+app.get("/videos", async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = 6;
+  const search = req.query.search || "";
 
-  const total = await videosCollection.countDocuments();
+  const query = {
+    title: { $regex: search, $options: "i" },
+  };
+
+  const total = await videosCollection.countDocuments(query);
 
   const videos = await videosCollection
-    .find()
+    .find(query)
+    .sort({ createdAt: -1 })
     .skip((page - 1) * limit)
     .limit(limit)
     .toArray();
@@ -59,9 +63,9 @@ app.get("/videos", async (req, res) => {
   });
 });
 
-app.delete("/videos/:id", async (req, res) => {
-  await connectDB();
+/* ================= DELETE ================= */
 
+app.delete("/videos/:id", async (req, res) => {
   await videosCollection.deleteOne({
     _id: new ObjectId(req.params.id),
   });
@@ -69,5 +73,4 @@ app.delete("/videos/:id", async (req, res) => {
   res.json({ message: "Deleted" });
 });
 
-/* IMPORTANT */
-export default app;
+app.listen(3001, () => console.log("Server running on 3001"));
